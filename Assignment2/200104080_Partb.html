@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>190204065_B</title>
+</head>
+<body>
+    <canvas id="webglcanvas" width="800" height="600"></canvas>
+
+    <script>
+        var canvas = document.getElementById("webglcanvas");
+        var gl = canvas.getContext("webgl");
+
+        var vertexShaderSource =
+            `attribute vec2 a_position;
+             attribute vec3 a_colors;
+             varying vec3 v_color;
+             uniform float u_shift;
+
+             void main(){
+                if(u_shift < 1.5 && u_shift > -1.5)
+                    gl_Position = vec4(a_position.x + u_shift, a_position.y, 0.0, 1.0);
+                else
+                    gl_Position = vec4(a_position, 0.0, 1.0);
+                v_color = a_colors;
+             }`;
+
+        var vsh = gl.createShader(gl.VERTEX_SHADER);
+        gl.shaderSource(vsh, vertexShaderSource);
+        gl.compileShader(vsh);
+
+        var fragmentShaderSource =
+            `precision mediump float;
+             varying vec3 v_color;
+
+             void main(){
+                gl_FragColor = vec4(v_color, 1.0);
+             }`;
+
+        var fsh = gl.createShader(gl.FRAGMENT_SHADER);
+        gl.shaderSource(fsh, fragmentShaderSource);
+        gl.compileShader(fsh);
+
+        var prog = gl.createProgram();
+
+        gl.attachShader(prog, vsh);
+        gl.attachShader(prog, fsh);
+
+        gl.linkProgram(prog);
+
+        gl.useProgram(prog);
+
+        var shift = 0.0; // Initial shift value
+        var points = [];
+        var step = 0.12;
+        var rgb_colors = [];
+
+        for (var i = 0; i < 45; i++) {
+            var a1x = i * step;
+            var a1y = 0.0;
+            var b1x = a1x + (step / 2);
+            var b1y = 0.3;
+            var c1x = a1x - step;
+            var c1y = 0.0;
+
+            var a2x = i * step;
+            var a2y = 0.0;
+            var b2x = a2x + (step / 2);
+            var b2y = -0.3;
+            var c2x = a2x - step;
+            var c2y = 0.0;
+
+            points.push(a1x, a1y, b1x, b1y, c1x, c1y);
+            points.push(a2x, a2y, b2x, b2y, c2x, c2y);
+
+			rgb_colors.push(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+           rgb_colors.push(0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0); 
+
+        }
+
+        var coords = new Float32Array(points);
+        var colors = new Float32Array(rgb_colors);
+
+        var a_position_location = gl.getAttribLocation(prog, "a_position");
+        var a_position_buffer = gl.createBuffer();
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, a_position_buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, coords, gl.STATIC_DRAW);
+        gl.vertexAttribPointer(a_position_location, 2, gl.FLOAT, false, 0, 0);
+        gl.enableVertexAttribArray(a_position_location);
+
+        var a_colors_location = gl.getAttribLocation(prog, "a_colors");
+        var a_colors_buffer = gl.createBuffer();
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, a_colors_buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, colors, gl.STATIC_DRAW);
+        gl.vertexAttribPointer(a_colors_location, 3, gl.FLOAT, false, 0, 0);
+        gl.enableVertexAttribArray(a_colors_location);
+
+        var u_shift_location = gl.getUniformLocation(prog, "u_shift");
+        gl.uniform1f(u_shift_location, shift);
+
+        gl.clearColor(0.7, 0.7, 0.7, 1.0);;
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.drawArrays(gl.TRIANGLES, 0, points.length / 2);
+
+        document.onkeydown = function (event) {
+            switch (event.key) {
+                case 'ArrowLeft':
+                    shift -= 0.1;
+                    gl.uniform1f(u_shift_location, shift);
+                    break;
+                case 'ArrowRight':
+                    shift += 0.1;
+                    gl.uniform1f(u_shift_location, shift);
+                    break;
+            }
+            gl.clearColor(0.7, 0.7, 0.7, 1.0);;
+            gl.clear(gl.COLOR_BUFFER_BIT);
+            gl.drawArrays(gl.TRIANGLES, 0, points.length / 2);
+        };
+    </script>
+</body>
+</html>

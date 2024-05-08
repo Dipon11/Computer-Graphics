@@ -1,0 +1,83 @@
+
+<html>
+<title>190204060_PartA</title>
+<canvas id="webglcanvas" width="800" height="800"></canvas>
+
+<script>
+    var canvas = document.getElementById("webglcanvas");
+    var gl = canvas.getContext("webgl");
+
+    var vertexShaderSource =
+        `attribute vec3 a_coords;   
+	     uniform float u_size;	   
+		 void main(){
+            gl_Position = vec4(a_coords, 1.0);
+            gl_PointSize = u_size;			
+         }`;
+		 
+    var fragmentShaderSource =
+        `precision mediump float;
+         uniform vec3 u_color;
+         void main(){
+            gl_FragColor = vec4(u_color, 1.0);
+         }`;
+
+    var vsh = gl.createShader(gl.VERTEX_SHADER);
+    gl.shaderSource(vsh, vertexShaderSource);
+    gl.compileShader(vsh);
+
+    var fsh = gl.createShader(gl.FRAGMENT_SHADER);
+    gl.shaderSource(fsh, fragmentShaderSource);
+    gl.compileShader(fsh);
+
+    var prog = gl.createProgram();
+
+    gl.attachShader(prog, vsh);
+    gl.attachShader(prog, fsh);
+    gl.linkProgram(prog);
+    gl.useProgram(prog);
+
+    var a_coords_location = gl.getAttribLocation(prog, "a_coords");
+    
+    var coords = [0.0,0.0,0.0];
+
+    var a_coords_buffer = gl.createBuffer();
+	u_color_location = gl.getUniformLocation(prog, "u_color");
+    gl.bindBuffer(gl.ARRAY_BUFFER, a_coords_buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(coords), gl.STATIC_DRAW);
+    gl.vertexAttribPointer(a_coords_location, 3, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(a_coords_location);
+
+    var u_size_location = gl.getUniformLocation(prog, "u_size");
+    var size = 1;
+    gl.uniform1f(u_size_location, size);
+	var k=2;
+    var n_point=1;
+	var alpha = 1;
+    gl.clearColor(1.0, 1.0, 0.9, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.drawArrays(gl.POINTS, 0, n_point);
+	
+	canvas.onmousedown = function () {
+		gl.uniform1f(u_size_location, size);
+		coords = [];
+		for (var i = 0; i < 360; i += 0.001) {
+			var x = alpha*Math.cos(k * i) * Math.cos(i);
+			var y = alpha*Math.cos(k * i) * Math.sin(i);
+			coords.push(x, y, 0.0);
+		}
+		var col = k % 2 ? [1.0, 0.0, 0.0]:[0.0, 1.0, 0.0];
+		k += 1; 
+		gl.uniform3fv(u_color_location, col);
+		gl.clearColor(1.0, 1.0, 0.9, 1.0);
+		gl.clear(gl.COLOR_BUFFER_BIT);
+		gl.bindBuffer(gl.ARRAY_BUFFER, a_coords_buffer);
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(coords), gl.STATIC_DRAW);
+		gl.vertexAttribPointer(a_coords_location, 3, gl.FLOAT, false, 0, 0);
+		gl.enableVertexAttribArray(a_coords_location);
+		n_point = coords.length / 3;
+		gl.drawArrays(gl.POINTS, 0, n_point);
+	};
+
+</script>
+</html>
